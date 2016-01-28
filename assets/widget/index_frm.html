@@ -1,0 +1,55 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="maximum-scale=1.0, minimum-scale=1.0, user-scalable=0, initial-scale=1.0, width=device-width"/>
+    <meta name="format-detection" content="telephone=no, email=no, date=no, address=no">
+    <title>WinA</title>
+    <link rel="stylesheet" type="text/css" href="css/api.css" />
+    <link rel="stylesheet" type="text/css" href="css/box.css" />
+    <script type="text/javascript" src="script/public.js"></script>
+    <style>
+    	p{
+    		color:#999;
+    		padding:5px;
+    	}
+    </style>
+	<script type="text/javascript">
+	    
+		var cameraDemoModule = null;
+		apiready = function(){
+			cameraDemoModule = api.require('cameraDemoModule');
+	    }
+	    
+		function openCamera(){
+			var img_url = document.getElementById("img_url").value;
+			var param = {url:img_url};
+			cameraDemoModule.openCamera(param);
+		}
+		
+		function openCameraForResult(){
+			var img_url = document.getElementById("img_url").value;
+			var param = {url:img_url};
+			var resultCallback = function(ret, err){
+				document.getElementById("camera_result").innerHTML = JSON.stringify(ret);
+			}
+			cameraDemoModule.openCameraForResult(param, resultCallback);
+		}
+		
+	</script>
+</head>
+<body>
+    <div id="wrap">
+        <div id="main">
+        	<br>
+			<div class='itemtitle'>从APICloud启动自定义模块CameraDemo(调用Android SDK开发的模块)</div>
+				<lable>设置图片地址</lable><br>
+				<input type="text" id="img_url" value="http://pic5.nipic.com/20100117/4085526_073608474061_2.jpg" />
+				<div class="clickbtn" tapmode="active" onclick="openCamera()" >openCamera</div>
+				<div class="clickbtn" tapmode="active" onclick="openCameraForResult()" >openCameraForResult</div>
+				<div style="font-size:0.8em;">CameraDemo返回值:</div>
+            	<div id="camera_result" style="width:100%;word-wrap: break-word;word-break: normal;"></div><br><br>
+		</div>
+	</div>
+</body>
+</html>

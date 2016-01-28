@@ -1,0 +1,8 @@
+{
+	modules:[
+		{
+		    name:'cameraDemoModule',
+		    class:'com.hxj.app.camerademo.CameraDemoModule'
+		}
+	]
+}

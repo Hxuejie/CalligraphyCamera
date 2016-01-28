@@ -1,0 +1,67 @@
+<!-- 相机界面 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFC7EDE9"
+    android:orientation="vertical"
+    android:padding="50dp" >
+    
+    <!-- 返回 -->
+    <Button 
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="X"
+        android:minHeight="0dp"
+        android:layout_gravity="right"
+        android:onClick="onBack"/>
+    <!-- title -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFAFD7ED"
+        android:orientation="horizontal" >
+		<TextView 
+		    android:id="@+id/camear_color"
+	        android:layout_width="30dp"
+	        android:layout_height="30dp"
+	        android:background="#FFFFFFFF"
+	        android:clickable="true"
+	        android:onClick="onShowColorDialog"/>
+        
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="5dp"
+            android:text="←点击修改底色.\n←去底,加透,支持手动对焦"
+            android:textColor="#FFFF425D"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- camera view -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_weight="1" >
+
+        <SurfaceView
+            android:id="@+id/camnera_cameraview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <ImageView
+            android:id="@+id/camera_word"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true" />
+    </RelativeLayout>
+    
+    <!-- button -->
+    <Button 
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="对比"
+        android:layout_marginTop="20dp"
+        android:onClick="onCompare"/>
+
+</LinearLayout>
