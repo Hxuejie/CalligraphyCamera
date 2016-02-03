@@ -26,7 +26,7 @@
 	        android:layout_height="30dp"
 	        android:background="#FFFFFFFF"
 	        android:clickable="true"
-	        android:onClick="onShowColorDialog"/>
+	        android:onClick="onShowColorPalette"/>
         
         <TextView
             android:layout_width="match_parent"
@@ -62,6 +62,6 @@
         android:layout_height="wrap_content"
         android:text="对比"
         android:layout_marginTop="20dp"
-        android:onClick="onCompare"/>
+        android:onClick="onCameraOperation"/>
 
 </LinearLayout>

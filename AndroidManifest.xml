@@ -42,7 +42,7 @@
         </activity>
         <!-- CameraDemoModule模块中用到的Activity -->
         <activity
-            android:name=".CameraActivity"
+            android:name="com.hxj.app.calligraphycamera.CameraActivity"
         	android:screenOrientation="portrait"
         	android:configChanges="orientation|locale" />
     </application>

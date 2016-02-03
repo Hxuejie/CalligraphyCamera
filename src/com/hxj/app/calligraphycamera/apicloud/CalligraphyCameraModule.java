@@ -1,7 +1,8 @@
-package com.hxj.app.camerademo;
+package com.hxj.app.calligraphycamera.apicloud;
 
 import android.content.Intent;
 
+import com.hxj.app.calligraphycamera.CameraActivity;
 import com.uzmap.pkg.uzcore.UZWebView;
 import com.uzmap.pkg.uzcore.uzmodule.UZModule;
 import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
@@ -9,16 +10,20 @@ import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
 /**
  * APICloud模块
  * 
- * @author huangxuejie
+ * @author huangxuejie hxuejie@126.com
  */
-public class CameraDemoModule extends UZModule {
+public class CalligraphyCameraModule extends UZModule {
 
-	static final int		ACTIVITY_REQUEST_CODE_A	= 100;
+	static final int ACTIVITY_REQUEST_CODE = 100;
 
-	public CameraDemoModule(UZWebView webView) {
+	public CalligraphyCameraModule(UZWebView webView) {
 		super(webView);
 	}
 
+	/**
+	 * 打开相机
+	 * @param moduleContext
+	 */
 	public void jsmethod_openCamera(UZModuleContext moduleContext) {
 		Intent intent = new Intent(getContext(), CameraActivity.class);
 		intent.putExtra("url", moduleContext.optString("url"));
@@ -29,7 +34,7 @@ public class CameraDemoModule extends UZModule {
 		Intent intent = new Intent(getContext(), CameraActivity.class);
 		intent.putExtra("url", moduleContext.optString("url"));
 		intent.putExtra("needResult", true);
-		startActivityForResult(intent, ACTIVITY_REQUEST_CODE_A);
+		startActivityForResult(intent, ACTIVITY_REQUEST_CODE);
 	}
 
 }

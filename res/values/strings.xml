@@ -3,5 +3,10 @@
 
     <string name="app_name">CameraDemo</string>
     <string name="action_settings">Settings</string>
+    <string name="downloading">正在下载图片...</string>
+    <string name="download_fail">下载失败</string>
+    <string name="download_success">下载成功</string>
+    <string name="colorpalette_title">底色选择</string>
+    <string name="no_image">没有对比图片</string>
 
 </resources>
