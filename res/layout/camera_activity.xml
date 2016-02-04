@@ -3,8 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFC7EDE9"
-    android:orientation="vertical"
-    android:padding="50dp" >
+    android:orientation="vertical">
     
     <!-- 返回 -->
     <Button 
@@ -37,23 +36,36 @@
             android:textSize="14sp" />
     </LinearLayout>
 
-    <!-- camera view -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:layout_weight="1" >
 
+        <!-- 相机 -->
         <SurfaceView
             android:id="@+id/camnera_cameraview"
+            android:layout_centerInParent="true"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
-
+		<!-- 对比字体 -->
         <ImageView
             android:id="@+id/camera_word"
+            android:scaleType="fitXY"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true" />
+        <!-- 水印 -->
+        <TextView 
+            android:id="@+id/camera_watermark"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="这个是水印"
+           	android:textSize="18sp"
+			android:layout_alignRight="@id/camnera_cameraview"
+			android:layout_alignBottom="@id/camnera_cameraview"
+           	android:layout_margin="5dp"
+           	android:textColor="#99FFFFFF"/>
     </RelativeLayout>
     
     <!-- button -->

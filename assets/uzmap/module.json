@@ -1,8 +1,8 @@
 {
 	modules:[
 		{
-		    name:'cameraDemoModule',
-		    class:'com.hxj.app.camerademo.CameraDemoModule'
+		    name:'CalligraphyCamera',
+		    class:'com.hxj.app.calligraphycamera.apicloud.CalligraphyCameraModule'
 		}
 	]
 }
