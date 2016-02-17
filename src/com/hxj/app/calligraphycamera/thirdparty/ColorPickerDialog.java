@@ -1,4 +1,4 @@
-package com.hxj.app.calligraphycamera;
+package com.hxj.app.calligraphycamera.thirdparty;
 
 import android.app.Dialog;
 import android.content.Context;

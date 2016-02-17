@@ -1,11 +1,10 @@
 package com.hxj.app.calligraphycamera;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
-
-import com.hxj.app.calligraphycamera.apicloud.APICloudAdapterActivity;
-import com.koushikdutta.urlimageviewhelper.UrlImageViewCallback;
-import com.koushikdutta.urlimageviewhelper.UrlImageViewHelper;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -13,6 +12,7 @@ import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Rect;
@@ -24,16 +24,23 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Display;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
+import android.view.ViewGroup.MarginLayoutParams;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.hxj.app.calligraphycamera.apicloud.APICloudAdapterActivity;
+import com.hxj.app.calligraphycamera.thirdparty.ColorPickerDialog;
+import com.koushikdutta.urlimageviewhelper.UrlImageViewCallback;
+import com.koushikdutta.urlimageviewhelper.UrlImageViewHelper;
 
 /**
  * 相机
@@ -47,16 +54,17 @@ public class CameraActivity extends APICloudAdapterActivity {
 
 	private SurfaceView			cameraView;
 	private ImageView			wordView;
-	private View				colorView;
 	private TextView			watermarkView;
 
 	private Camera				camera;
 	private Bitmap				wordImage;
 	private Bitmap				filterWordImage;
-	private int					filterColor;
+	private int					backgroundColor	= Color.WHITE;
+	private int 				lineColor = Color.RED;
 	private String				wordURL;
-	private int					photoSize	= 500;
+	private int					photoSize	= 720;
 	private Bitmap				photo;
+	private Toast				toast;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -65,8 +73,22 @@ public class CameraActivity extends APICloudAdapterActivity {
 		cameraView = (SurfaceView) findViewById("camnera_cameraview");
 		wordView = (ImageView) findViewById("camera_word");
 		watermarkView = (TextView) findViewById("camera_watermark");
-		colorView = findViewById("camear_color");
-		initView();
+		
+		cameraView.getHolder().addCallback(new Callback() {
+			@Override
+			public void surfaceDestroyed(SurfaceHolder holder) {
+				closeCamera();
+			}
+
+			@Override
+			public void surfaceCreated(SurfaceHolder holder) {
+			}
+
+			@Override
+			public void surfaceChanged(SurfaceHolder holder, int format,
+					int width, int height) {
+			}
+		});
 
 		Intent data = getIntent();
 		if (data == null) {
@@ -75,20 +97,26 @@ public class CameraActivity extends APICloudAdapterActivity {
 		}
 		wordURL = data.getStringExtra("url");
 		downloadWordImage();
-		prepareCamera();
 	}
-
-	/**
-	 * 初始化界面
-	 */
-	private void initView() {
-		filterColor = Color.WHITE;
-		colorView.setBackgroundColor(filterColor);
-
-		Display display = this.getWindowManager().getDefaultDisplay();
-		int width = display.getWidth();
-		LayoutParams lp = cameraView.getLayoutParams();
-		lp.height = width;
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		super.onCreateOptionsMenu(menu);
+		getMenuInflater().inflate(R.menu.main, menu);
+		return true;
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch(item.getItemId()){
+		case R.id.menu_bgcolor:
+			selectBackgrundColor();
+			break;
+		case R.id.menu_linecolor:
+			selectLineColor();
+			break;
+		}
+		return true;
 	}
 
 	@Override
@@ -102,49 +130,30 @@ public class CameraActivity extends APICloudAdapterActivity {
 		}
 		return super.onTouchEvent(event);
 	}
-
-	/**
-	 * XML返回按钮事件回调<BR>
-	 * 在这里处理界面返回
-	 * 
-	 * @param v
-	 */
-	public void onBack(View v) {
-		this.finish();
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		openCamera();
+	}
+	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		closeCamera();
 	}
 
 	/**
-	 * XML调色板按钮事件回调<BR>
-	 * 在这里调用调色板
+	 * XML拍照按钮事件回调
 	 * 
 	 * @param v
 	 */
-	public void onShowColorPalette(View v) {
-		showColorPalette();
-	}
-
-	/**
-	 * XML相机按钮事件回调
-	 * 
-	 * @param v
-	 */
-	public void onCameraOperation(View v) {
+	public void onTakePhoto(View v) {
 		// 关闭
 		if (camera != null) {
 			takePhoto();
 			return;
 		}
-
-		// 1.创建过滤图片
-		if (wordImage != null) {
-			filterWordImage = colorFilter(wordImage, filterColor, COLOR_RANGE);
-			wordView.setImageBitmap(filterWordImage);
-		} else {
-			tip(getString("no_image"));
-		}
-
-		// 2.打开相机
-		openCamera();
 	}
 
 	/**
@@ -162,14 +171,23 @@ public class CameraActivity extends APICloudAdapterActivity {
 				debug("photo size: " + photo.getWidth() + " x "
 						+ photo.getHeight());
 				Bitmap mixPicture = mixPictures();
-				savePicture(mixPicture);
+				savePhoto(mixPicture);
+				
+				//restart preview
+				camera.startPreview();
 			}
 		});
 	}
 
-	private void savePicture(Bitmap img) {
-		MediaStore.Images.Media.insertImage(getContentResolver(), img, "title",
-				"description");
+	/**
+	 * 保存照片
+	 * @param img
+	 */
+	private void savePhoto(Bitmap img) {
+		tip("正在保存照片...");
+		MediaStore.Images.Media.insertImage(getContentResolver(), img,
+				"CalligraphyCamera",
+				"CalligraphyCamera Photo:" + new Date().toString());
 	}
 
 	/**
@@ -189,21 +207,30 @@ public class CameraActivity extends APICloudAdapterActivity {
 		// 画底图
 		int pw = photo.getWidth();
 		int ph = photo.getHeight();
-		int padding = (ph - pw) / 2;
-		Rect src = new Rect(0, padding, pw, ph - padding);
+		int padding = (pw - ph) / 2;
+		Rect src = new Rect(padding, 0, pw - padding, ph);
 		Rect dst = new Rect(0, 0, w, h);
 		Paint p = new Paint();
 		p.setAntiAlias(true);
+		c.save();
+		c.rotate(90, w / 2.0F, h / 2.0F);
 		c.drawBitmap(photo, src, dst, p);
+		c.restore();
 		// 画字
 		if (filterWordImage != null) {
-			int left = (w - filterWordImage.getWidth()) / 2;
-			int top = (h - filterWordImage.getHeight()) / 2;
-			c.drawBitmap(filterWordImage, left, top, p);
+			float s = 1.0F * w / filterWordImage.getWidth();
+			Matrix matrix = new Matrix();
+			matrix.postScale(s, s);
+			c.drawBitmap(filterWordImage, matrix, p);
 		}
 		// 画水印
 		String watermark = watermarkView.getText().toString();
 		p.setTextAlign(Align.RIGHT);
+		p.setTextSize(watermarkView.getTextSize());
+		p.setColor(watermarkView.getTextColors().getDefaultColor());
+		int dx = -watermarkView.getPaddingRight();
+		int dy = -watermarkView.getPaddingBottom();
+		c.translate(dx, dy);
 		c.drawText(watermark, w, h, p);
 		return ret;
 
@@ -214,37 +241,131 @@ public class CameraActivity extends APICloudAdapterActivity {
 	 */
 	private void openCamera() {
 		debug("opean camera");
-		try {
-			camera = Camera.open(0);
-			Parameters parameters = camera.getParameters();
-			parameters.setJpegQuality(100);
-			List<Size> list = parameters.getSupportedPictureSizes();
-			Size size = selectPhotoSize(list, photoSize);
-			debug("set photo size: " + size.width + " x " + size.height);
-			parameters.setPictureSize(size.width, size.height);
-			camera.setParameters(parameters);
-			camera.setPreviewDisplay(cameraView.getHolder());
-			camera.setDisplayOrientation(90);
-			camera.startPreview();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		// open camera
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				camera = Camera.open(0);
+				if (camera == null) {
+					debug("camera open fail!!!");
+					return;
+				}
+				debug("camera opened");
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						try {
+							prepareCamera();
+							debug("start preview");
+							camera.startPreview();
+							showWatermark();
+						} catch (IOException e) {
+							e.printStackTrace();
+							debug("camera preview fail!!!");
+						}
+					}
+				});
+			}
+		},"OpenCamera").start();
+	}
+	
+	/**
+	 * 显示水印
+	 */
+	private void showWatermark(){
+		//设置水印位置
+		LayoutParams lp = cameraView.getLayoutParams();
+		int width = lp.width;
+		int height = lp.height;
+		int margin = (height - width) / 2;
+		MarginLayoutParams mlp = (MarginLayoutParams)watermarkView.getLayoutParams();
+		mlp.bottomMargin = margin;
+		watermarkView.setLayoutParams(mlp);
+		
+		watermarkView.setVisibility(View.VISIBLE);
+	}
+	
+	/**
+	 * 配置相机
+	 * @throws IOException 
+	 */
+	private void prepareCamera() throws IOException {
+		debug("prepare camera");
+		camera.setPreviewDisplay(cameraView.getHolder());
+		camera.setDisplayOrientation(90);
+		Parameters parameters = camera.getParameters();
+		parameters.setJpegQuality(100);
+		// set photo size
+		List<Size> sizeList = parameters.getSupportedPictureSizes();
+		Size size = selectPhotoSize(sizeList, photoSize);
+		debug("select photo size: " + size.width + " x " + size.height);
+		parameters.setPictureSize(size.width, size.height);
+		// set preview size
+		sizeList = parameters.getSupportedPreviewSizes();
+		int minSize = Math.min(cameraView.getWidth(), cameraView.getHeight());
+		size = selectPreviewSize(sizeList, minSize);
+		debug("select preview size: " + size.width + " x " + size.height);
+		parameters.setPreviewSize(size.width, size.height);
+		LayoutParams lp = cameraView.getLayoutParams();
+		lp.width = size.height;
+		lp.height = size.width;
+		cameraView.setLayoutParams(lp);
+
+		camera.setParameters(parameters);
 	}
 
 	/**
 	 * 选择照片尺寸
 	 * 
 	 * @param list
-	 * @param baseSize
-	 * @return
+	 * @param minSize
+	 * @return 返回大于baseSize的最小的照片尺寸,没有时返回最大的支持的尺寸.当list=null或list为空时返回NULL
 	 */
-	private Size selectPhotoSize(List<Size> list, int baseSize) {
+	private Size selectPhotoSize(List<Size> list, int minSize) {
+		if (list == null || list.isEmpty()) {
+			return null;
+		}
+		sortSizeList(list);
 		for (Size size : list) {
-			if (size.width >= baseSize && size.height >= baseSize) {
+			if (size.width >= minSize && size.height >= minSize) {
 				return size;
 			}
 		}
-		return list.get(0);
+		return list.get(list.size() - 1);
+	}
+	
+	/**
+	 * 选择预览窗口大小
+	 * @param list
+	 * @param minSize
+	 * @return
+	 */
+	private Size selectPreviewSize(List<Size> list, int minSize) {
+		if (list == null || list.isEmpty()) {
+			return null;
+		}
+		sortSizeList(list);
+		for (Size size : list) {
+			if (size.width >= minSize && size.height >= minSize) {
+				return size;
+			}
+		}
+		return list.get(list.size() - 1);
+	}
+	
+	/**
+	 * 从小到大排序
+	 * @param list
+	 */
+	private void sortSizeList(List<Size> list){
+		Collections.sort(list, new Comparator<Size>() {
+			@Override
+			public int compare(Size lhs, Size rhs) {
+				if (lhs.width > rhs.width) return 1;
+				if (lhs.width < rhs.width) return -1;
+				return 0;
+			}
+		});
 	}
 
 	/**
@@ -252,32 +373,12 @@ public class CameraActivity extends APICloudAdapterActivity {
 	 */
 	private void closeCamera() {
 		debug("close camera");
-		if (camera != null) {
-			camera.stopPreview();
-			camera.release();
-			camera = null;
+		if (camera == null) {
+			return;
 		}
-	}
-
-	/**
-	 * 配置相机
-	 */
-	private void prepareCamera() {
-		cameraView.getHolder().addCallback(new Callback() {
-			@Override
-			public void surfaceDestroyed(SurfaceHolder holder) {
-				closeCamera();
-			}
-
-			@Override
-			public void surfaceCreated(SurfaceHolder holder) {
-			}
-
-			@Override
-			public void surfaceChanged(SurfaceHolder holder, int format,
-					int width, int height) {
-			}
-		});
+		camera.stopPreview();
+		camera.release();
+		camera = null;
 	}
 
 	/**
@@ -335,18 +436,41 @@ public class CameraActivity extends APICloudAdapterActivity {
 	}
 
 	/**
-	 * 显示调色板
+	 * 选择背景色
 	 */
-	private void showColorPalette() {
+	private void selectBackgrundColor() {
 		String title = getString("colorpalette_title");
-		int curColor = filterColor;
+		int curColor = backgroundColor;
 		new ColorPickerDialog(this, curColor, title,
 				new ColorPickerDialog.OnColorChangedListener() {
 					@Override
 					public void colorChanged(int color) {
-						filterColor = color;
-						colorView.setBackgroundColor(color);
-						debug("change filter color: " + filterColor);
+						if (backgroundColor == color) {
+							return;
+						}
+						backgroundColor = color;
+						debug("change background color: " + backgroundColor);
+						showWordImage();
+					}
+				}).show();
+	}
+	
+	/**
+	 * 选择标线颜色
+	 */
+	private void selectLineColor() {
+		String title = getString("colorpalette_title");
+		int curColor = backgroundColor;
+		new ColorPickerDialog(this, curColor, title,
+				new ColorPickerDialog.OnColorChangedListener() {
+					@Override
+					public void colorChanged(int color) {
+						if (lineColor == color) {
+							return;
+						}
+						lineColor = color;
+						debug("change line color: " + lineColor);
+						showWordImage();
 					}
 				}).show();
 	}
@@ -372,8 +496,30 @@ public class CameraActivity extends APICloudAdapterActivity {
 						}
 						tip(getString("download_success"));
 						wordImage = paramBitmap;
+						showWordImage();
 					}
 				});
+	}
+	
+	/**
+	 * 显示字体图片
+	 */
+	private void showWordImage(){
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				filterWordImage = colorFilter(wordImage,
+						backgroundColor, COLOR_RANGE);
+				filterWordImage = colorFilter(filterWordImage,
+						lineColor, COLOR_RANGE);
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						wordView.setImageBitmap(filterWordImage);
+					}
+				});
+			}
+		}, "CreateFilterImage").start();
 	}
 
 	/**
@@ -382,7 +528,11 @@ public class CameraActivity extends APICloudAdapterActivity {
 	 * @param msg 信息内容
 	 */
 	private void tip(String msg) {
-		Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+		if (toast != null) {
+			toast.cancel();
+		}
+		toast = Toast.makeText(this, msg, Toast.LENGTH_SHORT);
+		toast.show();
 	}
 
 	/**
@@ -393,4 +543,5 @@ public class CameraActivity extends APICloudAdapterActivity {
 	private static void debug(String msg) {
 		Log.d(TAG, msg);
 	}
+	
 }
