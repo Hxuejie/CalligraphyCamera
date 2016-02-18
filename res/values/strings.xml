@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">CalligraphyCamera</string>
+    <string name="app_name">书法相机</string>
     <string name="downloading">正在下载图片……</string>
     <string name="download_fail">下载失败</string>
     <string name="download_success">下载成功</string>
     <string name="colorpalette_title">底色选择</string>
     <string name="no_image">没有对比图片</string>
     <string name="tackPhoto">拍照</string>
+    <string name="savePhoto">照片已保存到相册!</string>
     
     <string name="menu_bgcolor">设置底色</string>
     <string name="menu_linecolor">设置标线色</string>

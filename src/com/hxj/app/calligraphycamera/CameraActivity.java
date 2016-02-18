@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -37,10 +38,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.hxj.app.calligraphycamera.apicloud.APICloudAdapterActivity;
 import com.hxj.app.calligraphycamera.thirdparty.ColorPickerDialog;
 import com.koushikdutta.urlimageviewhelper.UrlImageViewCallback;
 import com.koushikdutta.urlimageviewhelper.UrlImageViewHelper;
+import com.uzmap.pkg.uzcore.UZResourcesIDFinder;
 
 /**
  * 相机
@@ -48,7 +49,7 @@ import com.koushikdutta.urlimageviewhelper.UrlImageViewHelper;
  * @author Hxuejie hxuejie@126.com
  */
 @SuppressWarnings("deprecation")
-public class CameraActivity extends APICloudAdapterActivity {
+public class CameraActivity extends Activity {
 	private static final String	TAG			= "CAMERA_ACTIVITY";
 	private static final int	COLOR_RANGE	= 20;
 
@@ -69,10 +70,10 @@ public class CameraActivity extends APICloudAdapterActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView("camera_activity");
-		cameraView = (SurfaceView) findViewById("camnera_cameraview");
-		wordView = (ImageView) findViewById("camera_word");
-		watermarkView = (TextView) findViewById("camera_watermark");
+		setContentView(UZResourcesIDFinder.getResLayoutID("camera_activity"));
+		cameraView = (SurfaceView) findViewById(UZResourcesIDFinder.getResIdID("camnera_cameraview"));
+		wordView = (ImageView) findViewById(UZResourcesIDFinder.getResIdID("camera_word"));
+		watermarkView = (TextView) findViewById(UZResourcesIDFinder.getResIdID("camera_watermark"));
 		
 		cameraView.getHolder().addCallback(new Callback() {
 			@Override
@@ -102,19 +103,20 @@ public class CameraActivity extends APICloudAdapterActivity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
-		getMenuInflater().inflate(R.menu.main, menu);
+		getMenuInflater().inflate(UZResourcesIDFinder.getResMenuID("main"), menu);
 		return true;
 	}
 	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		switch(item.getItemId()){
-		case R.id.menu_bgcolor:
+		final int itemID = item.getItemId();
+		final int bgcolor = UZResourcesIDFinder.getResIdID("menu_bgcolor");
+		final int linecolor = UZResourcesIDFinder.getResIdID("menu_linecolor");
+		if(itemID ==  bgcolor){
 			selectBackgrundColor();
-			break;
-		case R.id.menu_linecolor:
+		}else
+		if(itemID == linecolor){
 			selectLineColor();
-			break;
 		}
 		return true;
 	}
@@ -184,7 +186,7 @@ public class CameraActivity extends APICloudAdapterActivity {
 	 * @param img
 	 */
 	private void savePhoto(Bitmap img) {
-		tip("正在保存照片...");
+		tip(UZResourcesIDFinder.getString("savePhoto"));
 		MediaStore.Images.Media.insertImage(getContentResolver(), img,
 				"CalligraphyCamera",
 				"CalligraphyCamera Photo:" + new Date().toString());
@@ -439,7 +441,7 @@ public class CameraActivity extends APICloudAdapterActivity {
 	 * 选择背景色
 	 */
 	private void selectBackgrundColor() {
-		String title = getString("colorpalette_title");
+		String title = UZResourcesIDFinder.getString("colorpalette_title");
 		int curColor = backgroundColor;
 		new ColorPickerDialog(this, curColor, title,
 				new ColorPickerDialog.OnColorChangedListener() {
@@ -459,7 +461,7 @@ public class CameraActivity extends APICloudAdapterActivity {
 	 * 选择标线颜色
 	 */
 	private void selectLineColor() {
-		String title = getString("colorpalette_title");
+		String title = UZResourcesIDFinder.getString("colorpalette_title");
 		int curColor = backgroundColor;
 		new ColorPickerDialog(this, curColor, title,
 				new ColorPickerDialog.OnColorChangedListener() {
@@ -483,7 +485,7 @@ public class CameraActivity extends APICloudAdapterActivity {
 			return;
 		}
 		debug("download word image: " + wordURL);
-		tip(getString("downloading"));
+		tip(UZResourcesIDFinder.getString("downloading"));
 		UrlImageViewHelper.setUrlDrawable(wordView, wordURL,
 				new UrlImageViewCallback() {
 					@Override
@@ -491,10 +493,10 @@ public class CameraActivity extends APICloudAdapterActivity {
 							Bitmap paramBitmap, String paramString,
 							boolean paramBoolean) {
 						if (paramBitmap == null) {
-							tip(getString("download_fail"));
+							tip(UZResourcesIDFinder.getString("download_fail"));
 							return;
 						}
-						tip(getString("download_success"));
+						tip(UZResourcesIDFinder.getString("download_success"));
 						wordImage = paramBitmap;
 						showWordImage();
 					}
