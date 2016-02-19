@@ -6,19 +6,8 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
-import com.hxj.app.calligraphycamera.common.QQSDKConfig;
-import com.hxj.app.calligraphycamera.thirdparty.ColorPickerDialog;
-import com.koushikdutta.urlimageviewhelper.UrlImageViewCallback;
-import com.koushikdutta.urlimageviewhelper.UrlImageViewHelper;
-import com.tencent.connect.share.QQShare;
-import com.tencent.tauth.Tencent;
-import com.uzmap.pkg.uzcore.UZResourcesIDFinder;
-
 import android.app.Activity;
-import android.content.ContentResolver;
-import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
@@ -32,10 +21,8 @@ import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.Size;
-import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.provider.MediaStore.Images.ImageColumns;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
@@ -50,6 +37,11 @@ import android.view.ViewGroup.MarginLayoutParams;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.hxj.app.calligraphycamera.thirdparty.ColorPickerDialog;
+import com.koushikdutta.urlimageviewhelper.UrlImageViewCallback;
+import com.koushikdutta.urlimageviewhelper.UrlImageViewHelper;
+import com.uzmap.pkg.uzcore.UZResourcesIDFinder;
 
 /**
  * 相机
@@ -74,8 +66,7 @@ public class CameraActivity extends Activity {
 	private int					photoSize	= 500;
 	private Bitmap				photo;
 	private Toast				toast;
-	
-	private Tencent				mTencent;
+	private String				photoUri;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -101,9 +92,6 @@ public class CameraActivity extends Activity {
 			}
 		});
 		
-		// 初始化QQ SDK
-		mTencent = Tencent.createInstance(QQSDKConfig.APP_ID, this.getApplicationContext());
-
 		Intent data = getIntent();
 		if (data == null) {
 			debug("no intent data");
@@ -112,12 +100,6 @@ public class CameraActivity extends Activity {
 		wordURL = data.getStringExtra("url");
 		downloadWordImage();
 	}
-	
-	protected void onActivityResult(int requestCode, int resultCode,
-			Intent data) {
-		if (null != mTencent)
-			mTencent.onActivityResult(requestCode, resultCode, data);
-	} 
 	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -178,22 +160,6 @@ public class CameraActivity extends Activity {
 	}
 	
 	/**
-	 * 分享到QQ
-	 * @param imgURL
-	 */
-	public void shareToQQ(String imgURL) {
-		Log.d(TAG, "share to qq image url=" + imgURL);
-		final Bundle params = new Bundle();
-	    params.putInt(QQShare.SHARE_TO_QQ_KEY_TYPE, QQShare.SHARE_TO_QQ_TYPE_DEFAULT);
-	    params.putString(QQShare.SHARE_TO_QQ_TITLE, UZResourcesIDFinder.getString("app_name"));
-	    params.putString(QQShare.SHARE_TO_QQ_SUMMARY,  UZResourcesIDFinder.getString("share_content"));
-	    params.putString(QQShare.SHARE_TO_QQ_TARGET_URL,  QQSDKConfig.SHARE_TARGET_URL);
-	    params.putString(QQShare.SHARE_TO_QQ_IMAGE_LOCAL_URL, imgURL);
-	    params.putString(QQShare.SHARE_TO_QQ_APP_NAME,  UZResourcesIDFinder.getString("app_name"));
-	    mTencent.shareToQQ(this, params, null);
-	}
-
-	/**
 	 * 拍照
 	 */
 	private void takePhoto() {
@@ -204,16 +170,19 @@ public class CameraActivity extends Activity {
 		camera.takePicture(null, null, new PictureCallback() {
 			@Override
 			public void onPictureTaken(byte[] data, Camera camera) {
+				// stop preview
+				camera.stopPreview();
+
 				photo = BitmapFactory.decodeByteArray(data, 0, data.length);
 				debug("photo size: " + photo.getWidth() + " x "
 						+ photo.getHeight());
 				Bitmap mixPicture = mixPictures();
-				String uri = savePhoto(mixPicture);
-				
-				//restart preview
+				photoUri = savePhoto(mixPicture);
+				new ShareDialog(CameraActivity.this, photoUri, mixPicture)
+						.show();
+
+				// restart preview
 				camera.startPreview();
-				//分享
-				shareToQQ(uri);
 			}
 		});
 	}
@@ -225,37 +194,12 @@ public class CameraActivity extends Activity {
 	 */
 	private String savePhoto(Bitmap img) {
 		tip(UZResourcesIDFinder.getString("savePhoto"));
-		String imgUri = MediaStore.Images.Media.insertImage(getContentResolver(), img,
-				"CalligraphyCamera",
+		String imgUri = MediaStore.Images.Media.insertImage(
+				getContentResolver(), img, "CalligraphyCamera",
 				"CalligraphyCamera Photo:" + new Date().toString());
-		return getRealFilePath(this, Uri.parse(imgUri));
+		return imgUri;
 	}
 	
-	public static String getRealFilePath(final Context context, final Uri uri) {
-		if (null == uri)
-			return null;
-		final String scheme = uri.getScheme();
-		String data = null;
-		if (scheme == null)
-			data = uri.getPath();
-		else if (ContentResolver.SCHEME_FILE.equals(scheme)) {
-			data = uri.getPath();
-		} else if (ContentResolver.SCHEME_CONTENT.equals(scheme)) {
-			Cursor cursor = context.getContentResolver().query(uri,
-					new String[] { ImageColumns.DATA }, null, null, null);
-			if (null != cursor) {
-				if (cursor.moveToFirst()) {
-					int index = cursor.getColumnIndex(ImageColumns.DATA);
-					if (index > -1) {
-						data = cursor.getString(index);
-					}
-				}
-				cursor.close();
-			}
-		}
-		return data;
-	}
-
 	/**
 	 * 混合图片
 	 * 
