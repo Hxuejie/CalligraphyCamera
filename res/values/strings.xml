@@ -15,12 +15,5 @@
     <string name="menu_bgcolor">设置底色</string>
     <string name="menu_linecolor">设置标线色</string>
     
-    <string name="share_dialog_title">选择分享位置:</string>
-    <string name="share_item_qq">QQ</string>
-    <string name="share_item_qqzone">QQ空间</string>
-    <string name="share_item_wx">微信</string>
-    <string name="share_item_wxpyq">朋友圈</string>
-    <string name="share_item_sina">新浪</string>
-    
 
 </resources>

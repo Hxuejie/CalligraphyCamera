@@ -17,8 +17,10 @@
 	<script type="text/javascript">
 	    
 		var cameraDemoModule = null;
+		var qqModule = null;
 		apiready = function(){
 			cameraDemoModule = api.require('CalligraphyCamera');
+			qqModule = api.require('qq');
 	    }
 	    
 		function openCamera(){
@@ -32,8 +34,23 @@
 			var param = {url:img_url};
 			var resultCallback = function(ret, err){
 				document.getElementById("camera_result").innerHTML = JSON.stringify(ret);
+				self.shareToQQ(ret.url);
 			}
 			cameraDemoModule.openCameraForResult(param, resultCallback);
+		}
+
+		function shareToQQ(url){
+			qqModule.installed(function(ret,err){
+			    if(ret.status){
+			    	qqModule.shareImage({
+					    title:'apicloud qq share test',
+					    description:'test share image',
+					    imgPath:'widget://res/filterMe.png'
+					});
+			    }else{
+			       	api.alert({msg: "没有安装QQ"});
+			    } 
+			});
 		}
 		
 	</script>
@@ -46,9 +63,9 @@
 				<lable>设置图片地址</lable><br>
 				<input type="text" id="img_url" value="http://c.hiphotos.baidu.com/zhidao/pic/item/3b292df5e0fe9925fec60bc734a85edf8cb1715a.jpg" />
 				<div class="clickbtn" tapmode="active" onclick="openCamera()" >打开相机</div>
-				<!-- <div class="clickbtn" tapmode="active" onclick="openCameraForResult()" >openCameraForResult</div>
-				<div style="font-size:0.8em;">CameraDemo返回值:</div>
-            	<div id="camera_result" style="width:100%;word-wrap: break-word;word-break: normal;"></div><br><br> -->
+				<div class="clickbtn" tapmode="active" onclick="openCameraForResult()" >openCameraForResult</div>
+				<div style="font-size:0.8em;">CalligraphyCamera返回值:</div>
+            	<div id="camera_result" style="width:100%;word-wrap: break-word;word-break: normal;"></div><br><br>
 		</div>
 	</div>
 </body>

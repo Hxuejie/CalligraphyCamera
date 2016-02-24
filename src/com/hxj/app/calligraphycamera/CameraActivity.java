@@ -6,6 +6,11 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
+import com.hxj.app.calligraphycamera.thirdparty.ColorPickerDialog;
+import com.koushikdutta.urlimageviewhelper.UrlImageViewCallback;
+import com.koushikdutta.urlimageviewhelper.UrlImageViewHelper;
+import com.uzmap.pkg.uzcore.UZResourcesIDFinder;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -37,11 +42,6 @@ import android.view.ViewGroup.MarginLayoutParams;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.hxj.app.calligraphycamera.thirdparty.ColorPickerDialog;
-import com.koushikdutta.urlimageviewhelper.UrlImageViewCallback;
-import com.koushikdutta.urlimageviewhelper.UrlImageViewHelper;
-import com.uzmap.pkg.uzcore.UZResourcesIDFinder;
 
 /**
  * 相机
@@ -178,11 +178,11 @@ public class CameraActivity extends Activity {
 						+ photo.getHeight());
 				Bitmap mixPicture = mixPictures();
 				photoUri = savePhoto(mixPicture);
-				new ShareDialog(CameraActivity.this, photoUri, mixPicture)
-						.show();
 
-				// restart preview
-				camera.startPreview();
+				Intent ret = new Intent();
+				ret.putExtra("url", photoUri);
+				setResult(RESULT_OK, ret);
+				finish();
 			}
 		});
 	}
