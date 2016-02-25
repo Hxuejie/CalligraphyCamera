@@ -18,9 +18,16 @@
 	    
 		var cameraDemoModule = null;
 		var qqModule = null;
+		var photoModule = null;
 		apiready = function(){
 			cameraDemoModule = api.require('CalligraphyCamera');
 			qqModule = api.require('qq');
+			photoModule = api.require('imageTool');
+			api.toast({
+				msg: api.fsDir,
+				duration: 5000,
+				location: 'bottom'
+			});
 	    }
 	    
 		function openCamera(){
@@ -39,33 +46,57 @@
 			cameraDemoModule.openCameraForResult(param, resultCallback);
 		}
 
-		function shareToQQ(url){
-			qqModule.installed(function(ret,err){
-			    if(ret.status){
-			    	qqModule.shareImage({
-					    title:'apicloud qq share test',
-					    description:'test share image',
-					    imgPath:'widget://res/filterMe.png'
+		function shareToQQ(url) {
+			api.toast({
+				msg: '检测QQ安装...',
+				duration: 2000,
+				location: 'bottom'
+			});
+			qqModule.installed(function(ret, err) {
+				if (ret.status) {
+					api.toast({
+						msg: 'QQ分享...',
+						duration: 2000,
+						location: 'bottom'
 					});
-			    }else{
-			       	api.alert({msg: "没有安装QQ"});
-			    } 
+					qqModule.shareImage({
+						title: 'test',
+						description: 'testd',
+						imgPath: url
+					});
+				} else {
+					api.alert({
+						msg: "没有安装QQ"
+					});
+				}
+			});
+		}
+
+		function openAlbum() {
+			photoModule.openImage(function(ret, err) {
+				api.prompt({
+					title: "信息",
+					msg: "图片名称：" + ret.imgName + "图片大小：" + ret.imgSize + "图片路径：" + ret.imgPath,
+					buttons: ["取消", "确定"]
+				});
+				self.shareToQQ("fs:/" + ret.imgPath);
 			});
 		}
 		
 	</script>
 </head>
 <body>
-    <div id="wrap">
-        <div id="main">
-        	<br>
+	<div id="wrap">
+		<div id="main">
+			<br>
 			<div class='itemtitle'>从APICloud启动Android自定义模块(调用Android SDK开发的模块)</div>
-				<lable>设置图片地址</lable><br>
-				<input type="text" id="img_url" value="http://c.hiphotos.baidu.com/zhidao/pic/item/3b292df5e0fe9925fec60bc734a85edf8cb1715a.jpg" />
-				<div class="clickbtn" tapmode="active" onclick="openCamera()" >打开相机</div>
-				<div class="clickbtn" tapmode="active" onclick="openCameraForResult()" >openCameraForResult</div>
-				<div style="font-size:0.8em;">CalligraphyCamera返回值:</div>
-            	<div id="camera_result" style="width:100%;word-wrap: break-word;word-break: normal;"></div><br><br>
+			<lable>设置图片地址</lable><br>
+			<input type="text" id="img_url" value="http://c.hiphotos.baidu.com/zhidao/pic/item/3b292df5e0fe9925fec60bc734a85edf8cb1715a.jpg" />
+			<div class="clickbtn" tapmode="active" onclick="openCamera()" >打开相机</div>
+			<div class="clickbtn" tapmode="active" onclick="openCameraForResult()" >打开相机并返回照片地址</div>
+			<div style="font-size:0.8em;">CalligraphyCamera返回值:</div>
+			<div id="camera_result" style="width:100%;word-wrap: break-word;word-break: normal;"></div><br><br>
+			<div class="clickbtn" tapmode="active" onclick="openAlbum()" >打开相册</div>
 		</div>
 	</div>
 </body>
