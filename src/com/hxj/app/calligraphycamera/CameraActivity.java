@@ -12,7 +12,9 @@ import com.koushikdutta.urlimageviewhelper.UrlImageViewHelper;
 import com.uzmap.pkg.uzcore.UZResourcesIDFinder;
 
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
@@ -26,8 +28,10 @@ import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.Size;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.provider.MediaStore.Images.ImageColumns;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
@@ -180,7 +184,7 @@ public class CameraActivity extends Activity {
 				photoUri = savePhoto(mixPicture);
 
 				Intent ret = new Intent();
-				ret.putExtra("url", photoUri);
+				ret.putExtra("url", getRealFilePath(Uri.parse(photoUri)));
 				setResult(RESULT_OK, ret);
 				finish();
 			}
@@ -531,6 +535,38 @@ public class CameraActivity extends Activity {
 			}
 		}, "CreateFilterImage").start();
 	}
+	
+	/**
+	 * 得到真实的照片路径
+	 *
+	 * @param uri
+	 * @return
+	 */
+	private String getRealFilePath(final Uri uri) {
+		if (null == uri)
+			return null;
+		final String scheme = uri.getScheme();
+		String data = null;
+		if (scheme == null)
+			data = uri.getPath();
+		else if (ContentResolver.SCHEME_FILE.equals(scheme)) {
+			data = uri.getPath();
+		} else if (ContentResolver.SCHEME_CONTENT.equals(scheme)) {
+			Cursor cursor = this.getContentResolver().query(uri,
+					new String[] { ImageColumns.DATA }, null, null, null);
+			if (null != cursor) {
+				if (cursor.moveToFirst()) {
+					int index = cursor.getColumnIndex(ImageColumns.DATA);
+					if (index > -1) {
+						data = cursor.getString(index);
+					}
+				}
+				cursor.close();
+			}
+		}
+		return data;
+	}
+
 
 	/**
 	 * 弹出简短的提示信息
