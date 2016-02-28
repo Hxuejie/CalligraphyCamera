@@ -79,7 +79,7 @@
 					msg: "图片名称：" + ret.imgName + "图片大小：" + ret.imgSize + "图片路径：" + ret.imgPath,
 					buttons: ["取消", "确定"]
 				});
-				self.shareToQQ("fs:/" + ret.imgPath);
+				self.shareToQQ(ret.imgPath);
 			});
 		}
 		

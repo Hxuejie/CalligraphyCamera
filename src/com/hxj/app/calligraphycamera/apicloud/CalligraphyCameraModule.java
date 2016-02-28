@@ -12,7 +12,13 @@ import android.app.Activity;
 import android.content.Intent;
 
 /**
- * APICloud模块
+ * APICloud模块<BR>
+ * 以jsmethod_开头的都为对JS开放可调用接口<BR>
+ * 调用方法:<BR>
+ * 例如对jsmethod_openCamera方法的调用,JS中的代码为:<BR>
+ * var cameraDemoModule = api.require('CalligraphyCamera');<BR>
+ * var param = {url:img_url};<BR>
+ * cameraDemoModule.openCamera(param);
  * 
  * @author huangxuejie hxuejie@126.com
  */
@@ -26,7 +32,8 @@ public class CalligraphyCameraModule extends UZModule {
 	}
 
 	/**
-	 * 打开相机
+	 * 打开相机<BR>
+	 * JS参数列表: url[string] 字帖链接
 	 * @param moduleContext
 	 */
 	public void jsmethod_openCamera(UZModuleContext moduleContext) {
@@ -35,11 +42,16 @@ public class CalligraphyCameraModule extends UZModule {
 		startActivity(intent);
 	}
 
+	/**
+	 * 打开相机,并返回相片地址<BR>
+	 * JS参数列表: url[string] 字帖链接<BR>
+	 * JS返回值列表: url[string] 相片地址
+	 * @param moduleContext
+	 */
 	public void jsmethod_openCameraForResult(UZModuleContext moduleContext) {
 		uzContext = moduleContext;
 		Intent intent = new Intent(getContext(), CameraActivity.class);
 		intent.putExtra("url", moduleContext.optString("url"));
-		intent.putExtra("needResult", true);
 		startActivityForResult(intent, ACTIVITY_REQUEST_CODE);
 	}
 	
