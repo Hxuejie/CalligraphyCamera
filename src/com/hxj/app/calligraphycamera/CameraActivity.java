@@ -6,15 +6,12 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
-import com.hxj.app.calligraphycamera.thirdparty.ColorPickerDialog;
 import com.koushikdutta.urlimageviewhelper.UrlImageViewCallback;
 import com.koushikdutta.urlimageviewhelper.UrlImageViewHelper;
 import com.uzmap.pkg.uzcore.UZResourcesIDFinder;
 
 import android.app.Activity;
-import android.content.ContentResolver;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
@@ -31,11 +28,8 @@ import android.hardware.Camera.Size;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.provider.MediaStore.Images.ImageColumns;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
@@ -54,20 +48,22 @@ import android.widget.Toast;
  */
 @SuppressWarnings("deprecation")
 public class CameraActivity extends Activity {
-	private static final String	TAG			= "CAMERA_ACTIVITY";
-	private static final int	COLOR_RANGE	= 20;
+	private static final String	TAG				= "CAMERA_ACTIVITY";
+	private static final int	COLOR_RANGE		= 20;
 
 	private SurfaceView			cameraView;
 	private ImageView			wordView;
+	private ImageView			gridView;
 	private TextView			watermarkView;
 
 	private Camera				camera;
 	private Bitmap				wordImage;
+	private Bitmap				gridImage;
 	private Bitmap				filterWordImage;
 	private int					backgroundColor	= Color.WHITE;
-	private int 				lineColor = Color.RED;
 	private String				wordURL;
-	private int					photoSize	= 500;
+	private String				gridURL = "http://b.hiphotos.baidu.com/zhidao/wh%3D450%2C600/sign=b03ebd6e223fb80e0c8469d303e10318/54fbb2fb43166d22fe9da4cb452309f79152d283.jpg";
+	private int					photoSize		= 500;
 	private Bitmap				photo;
 	private Toast				toast;
 	private String				photoUri;
@@ -76,10 +72,12 @@ public class CameraActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(UZResourcesIDFinder.getResLayoutID("camera_activity"));
-		cameraView = (SurfaceView) findViewById(UZResourcesIDFinder.getResIdID("camnera_cameraview"));
+		cameraView = (SurfaceView) findViewById(
+				UZResourcesIDFinder.getResIdID("camnera_cameraview"));
 		wordView = (ImageView) findViewById(UZResourcesIDFinder.getResIdID("camera_word"));
+		gridView = (ImageView) findViewById(UZResourcesIDFinder.getResIdID("camera_wordgrid"));
 		watermarkView = (TextView) findViewById(UZResourcesIDFinder.getResIdID("camera_watermark"));
-		
+
 		cameraView.getHolder().addCallback(new Callback() {
 			@Override
 			public void surfaceDestroyed(SurfaceHolder holder) {
@@ -91,11 +89,10 @@ public class CameraActivity extends Activity {
 			}
 
 			@Override
-			public void surfaceChanged(SurfaceHolder holder, int format,
-					int width, int height) {
+			public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
 			}
 		});
-		
+
 		Intent data = getIntent();
 		if (data == null) {
 			debug("no intent data");
@@ -103,27 +100,6 @@ public class CameraActivity extends Activity {
 		}
 		wordURL = data.getStringExtra("url");
 		downloadWordImage();
-	}
-	
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		super.onCreateOptionsMenu(menu);
-		getMenuInflater().inflate(UZResourcesIDFinder.getResMenuID("main"), menu);
-		return true;
-	}
-	
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		final int itemID = item.getItemId();
-		final int bgcolor = UZResourcesIDFinder.getResIdID("menu_bgcolor");
-		final int linecolor = UZResourcesIDFinder.getResIdID("menu_linecolor");
-		if(itemID ==  bgcolor){
-			selectBackgrundColor();
-		}else
-		if(itemID == linecolor){
-			selectLineColor();
-		}
-		return true;
 	}
 
 	@Override
@@ -137,13 +113,13 @@ public class CameraActivity extends Activity {
 		}
 		return super.onTouchEvent(event);
 	}
-	
+
 	@Override
 	protected void onResume() {
 		super.onResume();
 		openCamera();
 	}
-	
+
 	@Override
 	protected void onPause() {
 		super.onPause();
@@ -162,7 +138,7 @@ public class CameraActivity extends Activity {
 			return;
 		}
 	}
-	
+
 	/**
 	 * 拍照
 	 */
@@ -178,13 +154,13 @@ public class CameraActivity extends Activity {
 				camera.stopPreview();
 
 				photo = BitmapFactory.decodeByteArray(data, 0, data.length);
-				debug("photo size: " + photo.getWidth() + " x "
-						+ photo.getHeight());
+				debug("photo size: " + photo.getWidth() + " x " + photo.getHeight());
 				Bitmap mixPicture = mixPictures();
 				photoUri = savePhoto(mixPicture);
 
 				Intent ret = new Intent();
-				ret.putExtra("url", getRealFilePath(Uri.parse(photoUri)));
+				String path = FileUtils.getRealFilePath(CameraActivity.this, Uri.parse(photoUri));
+				ret.putExtra("url", path);
 				setResult(RESULT_OK, ret);
 				finish();
 			}
@@ -193,17 +169,17 @@ public class CameraActivity extends Activity {
 
 	/**
 	 * 保存照片
+	 * 
 	 * @param img
 	 * @return img uri
 	 */
 	private String savePhoto(Bitmap img) {
 		tip(UZResourcesIDFinder.getString("savePhoto"));
-		String imgUri = MediaStore.Images.Media.insertImage(
-				getContentResolver(), img, "CalligraphyCamera",
-				"CalligraphyCamera Photo:" + new Date().toString());
+		String imgUri = MediaStore.Images.Media.insertImage(getContentResolver(), img,
+				"CalligraphyCamera", "CalligraphyCamera Photo:" + new Date().toString());
 		return imgUri;
 	}
-	
+
 	/**
 	 * 混合图片
 	 * 
@@ -236,6 +212,13 @@ public class CameraActivity extends Activity {
 			Matrix matrix = new Matrix();
 			matrix.postScale(s, s);
 			c.drawBitmap(filterWordImage, matrix, p);
+		}
+		// 画框
+		if (gridImage != null) {
+			float s = 1.0F * w / gridImage.getWidth();
+			Matrix matrix = new Matrix();
+			matrix.postScale(s, s);
+			c.drawBitmap(gridImage, matrix, p);
 		}
 		// 画水印
 		String watermark = watermarkView.getText().toString();
@@ -280,28 +263,29 @@ public class CameraActivity extends Activity {
 					}
 				});
 			}
-		},"OpenCamera").start();
+		}, "OpenCamera").start();
 	}
-	
+
 	/**
 	 * 显示水印
 	 */
-	private void showWatermark(){
-		//设置水印位置
+	private void showWatermark() {
+		// 设置水印位置
 		LayoutParams lp = cameraView.getLayoutParams();
 		int width = lp.width;
 		int height = lp.height;
 		int margin = (height - width) / 2;
-		MarginLayoutParams mlp = (MarginLayoutParams)watermarkView.getLayoutParams();
+		MarginLayoutParams mlp = (MarginLayoutParams) watermarkView.getLayoutParams();
 		mlp.bottomMargin = margin;
 		watermarkView.setLayoutParams(mlp);
-		
+
 		watermarkView.setVisibility(View.VISIBLE);
 	}
-	
+
 	/**
 	 * 配置相机
-	 * @throws IOException 
+	 * 
+	 * @throws IOException
 	 */
 	private void prepareCamera() throws IOException {
 		debug("prepare camera");
@@ -347,9 +331,10 @@ public class CameraActivity extends Activity {
 		}
 		return list.get(list.size() - 1);
 	}
-	
+
 	/**
 	 * 选择预览窗口大小
+	 * 
 	 * @param list
 	 * @param minSize
 	 * @return
@@ -366,17 +351,20 @@ public class CameraActivity extends Activity {
 		}
 		return list.get(list.size() - 1);
 	}
-	
+
 	/**
 	 * 从小到大排序
+	 * 
 	 * @param list
 	 */
-	private void sortSizeList(List<Size> list){
+	private void sortSizeList(List<Size> list) {
 		Collections.sort(list, new Comparator<Size>() {
 			@Override
 			public int compare(Size lhs, Size rhs) {
-				if (lhs.width > rhs.width) return 1;
-				if (lhs.width < rhs.width) return -1;
+				if (lhs.width > rhs.width)
+					return 1;
+				if (lhs.width < rhs.width)
+					return -1;
 				return 0;
 			}
 		});
@@ -396,100 +384,6 @@ public class CameraActivity extends Activity {
 	}
 
 	/**
-	 * 颜色过滤
-	 * 
-	 * @param src 源图
-	 * @param filterColor 过滤颜色
-	 * @param colorRange 容差
-	 * @return 返回过滤过的图片
-	 */
-	private Bitmap colorFilter(Bitmap src, int filterColor, int colorRange) {
-		if (src == null) {
-			return null;
-		}
-		int w = src.getWidth();
-		int h = src.getHeight();
-		// 创建可变图片
-		Bitmap retImg = Bitmap.createBitmap(w, h, Config.ARGB_8888);
-		Canvas c = new Canvas(retImg);
-		c.drawBitmap(src, 0, 0, new Paint());
-		// 过滤颜色
-		for (int r = 0; r < h; ++r) {
-			for (int l = 0; l < w; ++l) {
-				int px = retImg.getPixel(l, r);
-				if (colorEqual(px, filterColor, colorRange)) {
-					retImg.setPixel(l, r, Color.TRANSPARENT);
-				} else {
-
-					retImg.setPixel(l, r, 0x90FFFFFF & px);
-				}
-			}
-		}
-		return retImg;
-	}
-
-	/**
-	 * 比较颜色是否在指定颜色的容差范围内
-	 * 
-	 * @param color
-	 * @param baseColor
-	 * @param range
-	 * @return
-	 */
-	private boolean colorEqual(int color, int baseColor, int range) {
-		if (Math.abs(Color.red(color) - Color.red(baseColor)) > range) {
-			return false;
-		}
-		if (Math.abs(Color.green(color) - Color.green(baseColor)) > range) {
-			return false;
-		}
-		if (Math.abs(Color.blue(color) - Color.blue(baseColor)) > range) {
-			return false;
-		}
-		return true;
-	}
-
-	/**
-	 * 选择背景色
-	 */
-	private void selectBackgrundColor() {
-		String title = UZResourcesIDFinder.getString("colorpalette_title");
-		int curColor = backgroundColor;
-		new ColorPickerDialog(this, curColor, title,
-				new ColorPickerDialog.OnColorChangedListener() {
-					@Override
-					public void colorChanged(int color) {
-						if (backgroundColor == color) {
-							return;
-						}
-						backgroundColor = color;
-						debug("change background color: " + backgroundColor);
-						showWordImage();
-					}
-				}).show();
-	}
-	
-	/**
-	 * 选择标线颜色
-	 */
-	private void selectLineColor() {
-		String title = UZResourcesIDFinder.getString("colorpalette_title");
-		int curColor = backgroundColor;
-		new ColorPickerDialog(this, curColor, title,
-				new ColorPickerDialog.OnColorChangedListener() {
-					@Override
-					public void colorChanged(int color) {
-						if (lineColor == color) {
-							return;
-						}
-						lineColor = color;
-						debug("change line color: " + lineColor);
-						showWordImage();
-					}
-				}).show();
-	}
-
-	/**
 	 * 下载字体图片
 	 */
 	private void downloadWordImage() {
@@ -498,34 +392,55 @@ public class CameraActivity extends Activity {
 		}
 		debug("download word image: " + wordURL);
 		tip(UZResourcesIDFinder.getString("downloading"));
-		UrlImageViewHelper.setUrlDrawable(wordView, wordURL,
-				new UrlImageViewCallback() {
+		UrlImageViewHelper.setUrlDrawable(wordView, wordURL, new UrlImageViewCallback() {
+			@Override
+			public void onLoaded(ImageView paramImageView, Bitmap paramBitmap, String paramString,
+					boolean paramBoolean) {
+				if (paramBitmap == null) {
+					tip(UZResourcesIDFinder.getString("download_fail"));
+					return;
+				}
+				tip(UZResourcesIDFinder.getString("download_success"));
+				wordImage = paramBitmap;
+				showWordImage();
+			}
+		});
+		UrlImageViewHelper.setUrlDrawable(gridView, gridURL, new UrlImageViewCallback() {
+			@Override
+			public void onLoaded(ImageView paramImageView, Bitmap paramBitmap, String paramString,
+					boolean paramBoolean) {
+				if (paramBitmap == null) {
+					tip(UZResourcesIDFinder.getString("download_fail"));
+					return;
+				}
+				tip(UZResourcesIDFinder.getString("download_success"));
+				gridImage = paramBitmap;
+
+				new Thread(new Runnable() {
 					@Override
-					public void onLoaded(ImageView paramImageView,
-							Bitmap paramBitmap, String paramString,
-							boolean paramBoolean) {
-						if (paramBitmap == null) {
-							tip(UZResourcesIDFinder.getString("download_fail"));
-							return;
-						}
-						tip(UZResourcesIDFinder.getString("download_success"));
-						wordImage = paramBitmap;
-						showWordImage();
+					public void run() {
+						gridImage = ImageUtils.colorFilter(gridImage, backgroundColor, COLOR_RANGE);
+						runOnUiThread(new Runnable() {
+							@Override
+							public void run() {
+								gridView.setImageBitmap(gridImage);
+								showGridImage();
+							}
+						});
 					}
-				});
+				}, "CreateFilterImage").start();
+			}
+		});
 	}
-	
+
 	/**
 	 * 显示字体图片
 	 */
-	private void showWordImage(){
+	private void showWordImage() {
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
-				filterWordImage = colorFilter(wordImage,
-						backgroundColor, COLOR_RANGE);
-				filterWordImage = colorFilter(filterWordImage,
-						lineColor, COLOR_RANGE);
+				filterWordImage = ImageUtils.colorFilter(wordImage, backgroundColor, COLOR_RANGE);
 				runOnUiThread(new Runnable() {
 					@Override
 					public void run() {
@@ -536,37 +451,13 @@ public class CameraActivity extends Activity {
 		}, "CreateFilterImage").start();
 	}
 	
-	/**
-	 * 得到真实的照片路径
-	 *
-	 * @param uri
-	 * @return
-	 */
-	private String getRealFilePath(final Uri uri) {
-		if (null == uri)
-			return null;
-		final String scheme = uri.getScheme();
-		String data = null;
-		if (scheme == null)
-			data = uri.getPath();
-		else if (ContentResolver.SCHEME_FILE.equals(scheme)) {
-			data = uri.getPath();
-		} else if (ContentResolver.SCHEME_CONTENT.equals(scheme)) {
-			Cursor cursor = this.getContentResolver().query(uri,
-					new String[] { ImageColumns.DATA }, null, null, null);
-			if (null != cursor) {
-				if (cursor.moveToFirst()) {
-					int index = cursor.getColumnIndex(ImageColumns.DATA);
-					if (index > -1) {
-						data = cursor.getString(index);
-					}
-				}
-				cursor.close();
-			}
-		}
-		return data;
+	private void showGridImage(){
+		gridView.setVisibility(View.VISIBLE);
 	}
-
+	
+	private void hideGridImage(){
+		gridView.setVisibility(View.GONE);
+	}
 
 	/**
 	 * 弹出简短的提示信息
@@ -589,5 +480,5 @@ public class CameraActivity extends Activity {
 	private static void debug(String msg) {
 		Log.d(TAG, msg);
 	}
-	
+
 }

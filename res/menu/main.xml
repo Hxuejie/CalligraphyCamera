@@ -1,8 +1,0 @@
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item
-        android:id="@+id/menu_bgcolor"
-        android:title="@string/menu_bgcolor"/>
-    <item
-        android:id="@+id/menu_linecolor"
-        android:title="@string/menu_linecolor"/>
-</menu>
