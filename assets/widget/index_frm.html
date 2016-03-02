@@ -31,14 +31,18 @@
 	    }
 	    
 		function openCamera(){
-			var img_url = document.getElementById("img_url").value;
-			var param = {url:img_url};
+			var word_url = document.getElementById("img_url").value;
+			var grid_url = "http://b.hiphotos.baidu.com/zhidao/wh%3D450%2C600/sign=b03ebd6e223fb80e0c8469d303e10318/54fbb2fb43166d22fe9da4cb452309f79152d283.jpg";
+			var watermark_url = "http://h.hiphotos.baidu.com/zhidao/wh%3D450%2C600/sign=7e3fcd1ebe0e7bec238f0be51a1e950e/b3fb43166d224f4a679aaa020ff790529822d1a4.jpg";
+			var param = {word_url:word_url,grid_url:grid_url,watermark_url:watermark_url};
 			cameraDemoModule.openCamera(param);
 		}
 		
 		function openCameraForResult(){
-			var img_url = document.getElementById("img_url").value;
-			var param = {url:img_url};
+			var word_url = document.getElementById("img_url").value;
+			var grid_url = "http://b.hiphotos.baidu.com/zhidao/wh%3D450%2C600/sign=b03ebd6e223fb80e0c8469d303e10318/54fbb2fb43166d22fe9da4cb452309f79152d283.jpg";
+			var watermark_url = "http://h.hiphotos.baidu.com/zhidao/wh%3D450%2C600/sign=7e3fcd1ebe0e7bec238f0be51a1e950e/b3fb43166d224f4a679aaa020ff790529822d1a4.jpg";
+			var param = {word_url:word_url,grid_url:grid_url,watermark_url:watermark_url};
 			var resultCallback = function(ret, err){
 				document.getElementById("camera_result").innerHTML = JSON.stringify(ret);
 				self.shareToQQ(ret.url);

@@ -9,11 +9,7 @@
     <string name="no_image">没有对比图片</string>
     <string name="tackPhoto">拍照并分享</string>
     <string name="savePhoto">照片已保存到相册!</string>
-    
-    <string name="share_content">看我的字写的怎么样！</string>
-    
-    <string name="menu_bgcolor">设置底色</string>
-    <string name="menu_linecolor">设置标线色</string>
-    
+    <string name="grid_toggle_off">隐藏米字格</string>
+    <string name="grid_toggle_on">显示米字格</string>
 
 </resources>

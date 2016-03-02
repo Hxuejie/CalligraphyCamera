@@ -32,17 +32,22 @@
         android:scaleType="fitCenter" />
     
     <!-- 水印 -->
-    <TextView
+    <ImageView
         android:id="@+id/camera_watermark"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@id/camnera_cameraview"
-        android:layout_alignRight="@id/camnera_cameraview"
-        android:padding="5dp"
-        android:text="这个是水印"
-        android:visibility="gone"
-        android:textColor="#99FFFFFF"
-        android:textSize="18sp" />
+		android:layout_alignParentRight="true"
+		android:layout_alignParentBottom="true"/>
+    
+    <ToggleButton 
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="20dp"
+        android:textOn="@string/grid_toggle_on"
+        android:textOff="@string/grid_toggle_off"
+        android:checked="true"
+        android:onClick="onToggleGridShow"/>
 
     <!-- 拍照 -->
     <Button

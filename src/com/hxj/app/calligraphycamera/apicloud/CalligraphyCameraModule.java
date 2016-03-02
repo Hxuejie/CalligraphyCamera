@@ -1,5 +1,7 @@
 package com.hxj.app.calligraphycamera.apicloud;
 
+import java.util.Iterator;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -24,8 +26,8 @@ import android.content.Intent;
  */
 public class CalligraphyCameraModule extends UZModule {
 
-	static final int ACTIVITY_REQUEST_CODE = 100;
-	private static UZModuleContext uzContext;
+	static final int				ACTIVITY_REQUEST_CODE	= 100;
+	private static UZModuleContext	uzContext;
 
 	public CalligraphyCameraModule(UZWebView webView) {
 		super(webView);
@@ -33,33 +35,51 @@ public class CalligraphyCameraModule extends UZModule {
 
 	/**
 	 * 打开相机<BR>
-	 * JS参数列表: url[string] 字帖链接
+	 * JS参数列表: word_url[string] 字帖链接<BR>
+	 * JS参数列表: grid_url[string] 米字格链接<BR>
+	 * JS参数列表: watermark_url[string] 水印链接<BR>
+	 * 
 	 * @param moduleContext
 	 */
 	public void jsmethod_openCamera(UZModuleContext moduleContext) {
 		Intent intent = new Intent(getContext(), CameraActivity.class);
-		intent.putExtra("url", moduleContext.optString("url"));
+		JSONObject data = moduleContext.get();
+		Iterator<String> keys = data.keys();
+		while (keys.hasNext()) {
+			String key = keys.next();
+			String val = data.optString(key);
+			intent.putExtra(key, val);
+		}
 		startActivity(intent);
 	}
 
 	/**
 	 * 打开相机,并返回相片地址<BR>
-	 * JS参数列表: url[string] 字帖链接<BR>
+	 * JS参数列表: word_url[string] 字帖链接<BR>
+	 * JS参数列表: grid_url[string] 米字格链接<BR>
+	 * JS参数列表: watermark_url[string] 水印链接<BR>
 	 * JS返回值列表: url[string] 相片地址
+	 * 
 	 * @param moduleContext
 	 */
 	public void jsmethod_openCameraForResult(UZModuleContext moduleContext) {
 		uzContext = moduleContext;
 		Intent intent = new Intent(getContext(), CameraActivity.class);
-		intent.putExtra("url", moduleContext.optString("url"));
+		JSONObject data = moduleContext.get();
+		Iterator<String> keys = data.keys();
+		while (keys.hasNext()) {
+			String key = keys.next();
+			String val = data.optString(key);
+			intent.putExtra(key, val);
+		}
 		startActivityForResult(intent, ACTIVITY_REQUEST_CODE);
 	}
-	
+
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if(resultCode == Activity.RESULT_OK && requestCode == ACTIVITY_REQUEST_CODE){
+		if (resultCode == Activity.RESULT_OK && requestCode == ACTIVITY_REQUEST_CODE) {
 			String result = data.getStringExtra("url");
-			if(null != result && null != uzContext){
+			if (null != result && null != uzContext) {
 				try {
 					JSONObject ret = new JSONObject();
 					ret.put("url", result);
